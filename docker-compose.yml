@@ -34,7 +34,7 @@ services:
 
   worker:
     build: .
-    command: celery -A app.tasks worker --loglevel=info
+command: celery -A app.tasks worker --loglevel=info --concurrency=1 --pool=solo
     volumes:
       - .:/app
     env_file:

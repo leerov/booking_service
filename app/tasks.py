@@ -6,20 +6,39 @@ from sqlalchemy.orm import Session
 import app.database
 from app.models import Booking, BookingStatus
 from dotenv import load_dotenv
+import asyncio
+
+# Windows compatibility for asyncio event loop
+if hasattr(asyncio, 'WindowsSelectorEventLoopPolicy') and hasattr(asyncio, 'set_event_loop_policy'):
+    try:
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    except Exception:
+        pass
 
 load_dotenv()
 
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
+# Configure Celery with Windows compatibility
 celery_app = Celery(
     "tasks",
     broker=REDIS_URL,
-    backend=REDIS_URL
+    backend=REDIS_URL,
+    broker_connection_retry_on_startup=True
 )
+
+# Ensure Windows event loop policy is set
+import sys
+if sys.platform == 'win32':
+    try:
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    except Exception:
+        pass
 
 @celery_app.task(bind=True, name="process_booking")
 def process_booking(self, booking_id: int):
-    db: Session = app.database.SessionLocal()
+    # Create a fresh session for this task
+    db = app.database.SessionLocal()
     try:
         booking = db.query(Booking).filter(Booking.id == booking_id).first()
         if not booking:
