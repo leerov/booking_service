@@ -1,1 +1,33 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Базы данных SQLite (локальные)
+bookings.db
+test.db
+*.sqlite3
+
+# Файлы окружения (секреты)
 .env
+.env.local
+.env.*.local
+
+# Кэш pytest
+.pytest_cache/
+
+# Виртуальное окружение (локальное)
+venv/
+.venv/
+env/
+ENV/
+
+# Логи
+*.log
+
+# IDE (по желанию)
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
