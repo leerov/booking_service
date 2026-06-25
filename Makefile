@@ -7,6 +7,13 @@ dev:
 test:
 	@echo "Running tests..."
 	pytest -v --tb=short
+test:
+	@echo "Running tests..."
+	pytest -v --tb=short
+
+docker-test:
+	@echo "Running tests inside Docker container..."
+	docker-compose exec web pytest -v --tb=short
 
 lint:
 	@echo "Running linters..."

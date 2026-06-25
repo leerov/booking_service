@@ -1,5 +1,6 @@
 import pytest
 from unittest.mock import patch
+from datetime import datetime
 from app.tasks import process_booking
 from app.models import Booking, BookingStatus
 import app.database
@@ -7,7 +8,7 @@ import app.database
 def test_worker_success():
     # Create a clean session for this test
     db = app.database.SessionLocal()
-    booking = Booking(name="Test", datetime="2026-06-20T10:00:00", service_type="test", status=BookingStatus.PENDING)
+    booking = Booking(name="Test", datetime=datetime(2026, 6, 20, 10, 0, 0), service_type="test", status=BookingStatus.PENDING)
     db.add(booking)
     db.commit()
     booking_id = booking.id
@@ -27,7 +28,7 @@ def test_worker_success():
 def test_worker_failure():
     # Create a clean session for this test
     db = app.database.SessionLocal()
-    booking = Booking(name="Test", datetime="2026-06-20T10:00:00", service_type="test", status=BookingStatus.PENDING)
+    booking = Booking(name="Test", datetime=datetime(2026, 6, 20, 10, 0, 0), service_type="test", status=BookingStatus.PENDING)
     db.add(booking)
     db.commit()
     booking_id = booking.id

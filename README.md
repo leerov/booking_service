@@ -1,3 +1,4 @@
+```markdown
 # Booking Service
 
 Сервис бронирования с асинхронной обработкой через Celery.
@@ -27,7 +28,7 @@
 
 ```bash
 # Клонировать репозиторий
-git clone <repo-url>
+git clone git@github.com:leerov/booking_service.git
 cd booking_service
 
 # Скопировать переменные окружения
@@ -37,7 +38,7 @@ cp .env.example .env
 docker-compose up --build
 ```
 
-Сервис будет доступен по адресу: http://localhost:8000
+Сервис будет доступен по адресу: http://localhost:8000  
 Swagger UI: http://localhost:8000/docs
 
 ### Локальная разработка (без Docker)
@@ -60,31 +61,46 @@ uvicorn app.main:app --reload
 celery -A app.tasks worker --loglevel=info
 ```
 
-## Запуск тестов
+## Переменные окружения
+
+Скопируйте `.env.example` в `.env` и при необходимости измените значения:
 
 ```bash
-# Все тесты
-pytest
-
-# С подробным выводом
-pytest -v
-
-# Только API тесты
-pytest tests/test_api.py
-
-# Только тесты воркера
-pytest tests/test_worker.py
+cp .env.example .env
 ```
 
-Тесты используют SQLite и не требуют запущенного Docker.
+По умолчанию используются настройки для Docker Compose (PostgreSQL, Redis).
+
+## Запуск тестов
+
+Тесты можно запускать двумя способами:
+
+### Локально (без Docker)
+
+Убедитесь, что зависимости установлены и активировано виртуальное окружение:
+
+```bash
+pytest -v
+```
+
+### Внутри контейнера
+
+Если стек уже запущен через Docker Compose:
+
+```bash
+docker-compose exec web pytest -v
+```
+
+Тесты используют SQLite и не требуют запущенного PostgreSQL или Redis.
 
 ## Makefile
 
 Для удобства доступны команды:
 
 - `make dev` — запустить стек в Docker Compose
-- `make test` — запустить тесты
-- `make lint` — проверить код линтерами
+- `make test` — запустить тесты локально (требуется установка зависимостей)
+- `make docker-test` — запустить тесты внутри контейнера (требуется запущенный Docker Compose)
+- `make lint` — проверить код линтерами (flake8, black, isort)
 - `make fmt` — автоматически отформатировать код (black, isort)
 
 ## Принятые технические решения
@@ -112,3 +128,4 @@ Celery — зрелое и стабильное решение для фонов
 ### Тесты
 
 Тесты используют SQLite и моки для Celery и random, что позволяет запускать их изолированно, без внешних зависимостей.
+```

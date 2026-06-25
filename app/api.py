@@ -10,8 +10,6 @@ from app.schemas import BookingCreate, BookingResponse
 from app.tasks import process_booking
 
 from fastapi import Request
-import json_logging
-import logging
 router = APIRouter()
 limiter = Limiter(key_func=get_remote_address)
 

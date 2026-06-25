@@ -2,6 +2,7 @@ import os
 import random
 import logging
 import json
+# (пустая строка)
 from celery import Celery
 from sqlalchemy.orm import Session
 import app.database
@@ -38,11 +39,16 @@ if sys.platform == 'win32':
 
 @celery_app.task(bind=True, name="process_booking", max_retries=3, default_retry_delay=60)
 def process_booking(self, booking_id: int):
-    # Structured logging setup
-    import json_logging
-    import logging.config
-    json_logging.init_non_web(enable_json=True)
+    # Structured logging setup with custom JSON formatter
     logger = logging.getLogger(__name__)
+    if not logger.handlers:
+        handler = logging.StreamHandler()
+        formatter = logging.Formatter(
+            '{"time": "%(asctime)s", "level": "%(levelname)s", "name": "%(name)s", "message": %(message)s}'
+        )
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
+        logger.setLevel(logging.INFO)
 
     # Create a fresh session for this task
     db = app.database.SessionLocal()

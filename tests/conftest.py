@@ -3,7 +3,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from app.database import Base, get_db
 import app.database
-from app.main import app
+from app.main import app as fastapi_app
+import os
+os.environ["CELERY_ALWAYS_EAGER"] = "True"
 
 # Переопределяем БД на SQLite для тестов
 SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
@@ -21,7 +23,7 @@ def override_get_db():
     finally:
         db.close()
 
-app.dependency_overrides[get_db] = override_get_db
+fastapi_app.dependency_overrides[get_db] = override_get_db
 
 @pytest.fixture(autouse=True)
 def setup_db():
