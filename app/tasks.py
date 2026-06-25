@@ -1,6 +1,7 @@
 import os
 import random
 import logging
+import json
 from celery import Celery
 from sqlalchemy.orm import Session
 import app.database
@@ -35,33 +36,44 @@ if sys.platform == 'win32':
     except Exception:
         pass
 
-@celery_app.task(bind=True, name="process_booking")
+@celery_app.task(bind=True, name="process_booking", max_retries=3, default_retry_delay=60)
 def process_booking(self, booking_id: int):
+    # Structured logging setup
+    import json_logging
+    import logging.config
+    json_logging.init_non_web(enable_json=True)
+    logger = logging.getLogger(__name__)
+
     # Create a fresh session for this task
     db = app.database.SessionLocal()
     try:
         booking = db.query(Booking).filter(Booking.id == booking_id).first()
         if not booking:
-            logging.warning(f"Booking {booking_id} not found.")
+            logger.warning(json.dumps({"event": "booking_not_found", "booking_id": booking_id}))
             return
-        
+
         # Проверка идемпотентности
         if booking.status != BookingStatus.PENDING:
-            logging.info(f"Booking {booking_id} already processed. Status: {booking.status}")
+            logger.info(json.dumps({"event": "booking_already_processed", "booking_id": booking_id, "status": booking.status}))
             return
 
         # Имитация сбоя с вероятностью 15%
         if random.random() < 0.15:
             booking.status = BookingStatus.FAILED
             db.commit()
-            logging.info(f"Booking {booking_id} failed.")
+            logger.info(json.dumps({"event": "booking_failed", "booking_id": booking_id, "reason": "random_failure"}))
             return
 
         booking.status = BookingStatus.CONFIRMED
         db.commit()
-        logging.info(f"Booking {booking_id} confirmed. Mock notification sent.")
+        logger.info(json.dumps({"event": "booking_confirmed", "booking_id": booking_id, "mock_notification_sent": True}))
     except Exception as e:
-        logging.error(f"Error processing booking {booking_id}: {e}")
+        logger.error(json.dumps({"event": "booking_processing_error", "booking_id": booking_id, "error": str(e)}))
         db.rollback()
+        # Retry with exponential backoff
+        try:
+            self.retry(exc=e, countdown=60 * (2 ** self.request.retries))
+        except self.MaxRetriesExceededError:
+            logger.critical(json.dumps({"event": "booking_retries_exceeded", "booking_id": booking_id}))
     finally:
         db.close()

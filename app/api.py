@@ -1,4 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from app.database import get_db
@@ -6,10 +9,15 @@ from app.models import Booking, BookingStatus
 from app.schemas import BookingCreate, BookingResponse
 from app.tasks import process_booking
 
+from fastapi import Request
+import json_logging
+import logging
 router = APIRouter()
+limiter = Limiter(key_func=get_remote_address)
 
 @router.post("/bookings", response_model=BookingResponse, status_code=201)
-def create_booking(booking: BookingCreate, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+def create_booking(request: Request, booking: BookingCreate, db: Session = Depends(get_db)):
     db_booking = Booking(**booking.model_dump(), status=BookingStatus.PENDING)
     db.add(db_booking)
     db.commit()
